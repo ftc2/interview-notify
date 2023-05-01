@@ -26,12 +26,6 @@ parser.add_argument('--mode', choices=['red', 'orp'], default='red', help='inter
 parser.add_argument('-v', action='count', default=5, dest='verbose', help='verbose (invoke multiple times for more verbosity)')
 parser.add_argument('--version', action='version', version='{} v{}'.format(parser.prog, VERSION))
 
-# logging.critical('50 im a CRITICAL message')
-# logging.error('40 im a ERROR message')
-# logging.warning('30 im a WARNING message')
-# logging.info('20 im a INFO message')
-# logging.debug('10 im a DEBUG message')
-
 def log_scan():
   curr = find_latest_log()
   logging.debug('current log: {}'.format(curr.name))
