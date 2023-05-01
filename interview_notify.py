@@ -46,7 +46,7 @@ def find_latest_log():
   files = [f for f in args.path.iterdir() if f.is_file() and f.name != '.DS_Store']
   if len(files) == 0:
     crit_quit('no log files found')
-  return max(files, key=lambda f: f.stat().st_ctime)
+  return max(files, key=lambda f: f.stat().st_mtime)
 
 def spawn_parser(log_path):
   logging.debug('spawning new parser')
