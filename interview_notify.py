@@ -54,6 +54,12 @@ def spawn_parser(log_path):
   thread = threading.Thread(target=log_parse, args=(log_path, stop_event))
   return thread, stop_event
 
+def remove_html_tags(text):
+    """Remove html tags from a string"""
+    import re
+    clean = re.compile('<.*?>')
+    return re.sub(clean, '', text)
+
 def log_parse(log_path, stop_event):
   logging.info('parsing log file: {}'.format(log_path.name))
   log = open(log_path, 'r')
@@ -80,7 +86,7 @@ def check_trigger(line, trigger):
   if args.check_bot_nicks:
     triggers = bot_nick_prefix(trigger)
     return any(trigger in line for trigger in triggers)
-  return trigger in line
+  return trigger in remove_html_tags(line)
 
 def bot_nick_prefix(trigger):
   nicks = args.bot_nicks.split(',')
