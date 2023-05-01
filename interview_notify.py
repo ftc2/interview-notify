@@ -70,7 +70,7 @@ def log_parse(log_path, stop_event):
       notify(line, title="You've been mentioned", tags='wave')
 
 def tail(f, stop_event):
-  f.seek(0, os.SEEK_END)
+  f.seek(0, 0)
   while not stop_event.is_set():
     line = f.readline()
     if not line:
