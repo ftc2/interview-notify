@@ -54,12 +54,6 @@ def spawn_parser(log_path):
   thread = threading.Thread(target=log_parse, args=(log_path, stop_event))
   return thread, stop_event
 
-def remove_html_tags(text):
-    """Remove html tags from a string"""
-    import re
-    clean = re.compile('<.*?>')
-    return re.sub(clean, '', text)
-
 def log_parse(log_path, stop_event):
   logging.info('parsing log file: {}'.format(log_path.name))
   log = open(log_path, 'r')
@@ -91,6 +85,12 @@ def check_trigger(line, trigger):
 def bot_nick_prefix(trigger):
   nicks = args.bot_nicks.split(',')
   return ['{}> {}'.format(nick, trigger) for nick in nicks]
+
+def remove_html_tags(text):
+  """Remove html tags from a string"""
+  import re
+  clean = re.compile('<.*?>')
+  return re.sub(clean, '', text)
 
 def notify(data, **kwargs):
   headers = {k.capitalize():str(v).encode('utf-8') for (k,v) in kwargs.items()}
