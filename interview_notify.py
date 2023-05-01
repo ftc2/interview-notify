@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
-import argparse, sys, os, threading, logging, requests
+import argparse, sys, os, threading, logging, re, requests
 from pathlib import Path
 from time import sleep
 
-VERSION = '1.0'
+VERSION = '1.1.0'
 
 parser = argparse.ArgumentParser(prog='interview_notify.py',
   description='IRC Interview Notifier v{}\nhttps://github.com/ftc2/interview-notify'.format(VERSION),
@@ -40,10 +40,10 @@ def log_scan():
       parser.join()
       parser, stop_event = spawn_parser(curr)
       parser.start()
-    sleep(2) # scan for new files every 2s
+    sleep(1) # scan for newer file every 1s
 
 def find_latest_log():
-  files = [f for f in args.path.iterdir() if f.is_file() and f.name != '.DS_Store']
+  files = [f for f in args.path.iterdir() if f.is_file() and f.name not in ['.DS_Store', 'thumbs.db']]
   if len(files) == 0:
     crit_quit('no log files found')
   return max(files, key=lambda f: f.stat().st_mtime)
@@ -65,32 +65,35 @@ def log_parse(log_path, stop_event):
     elif check_trigger(line, 'Currently interviewing:'):
       logging.info('interview detected ⚠️')
       notify(line, title='Interview Detected', tags='warning')
+    elif check_trigger(line, '{}:'.format(args.nick), disregard_bot_nicks=True):
+      logging.info('mention detected ⚠️')
+      notify(line, title="You've been mentioned", tags='wave')
 
 def tail(f, stop_event):
   f.seek(0, os.SEEK_END)
   while not stop_event.is_set():
     line = f.readline()
     if not line:
-      sleep(1) # check for new lines every 1s
+      sleep(0.5) # check for new lines every 0.5s
       continue
     yield line
   yield ''
 
-def check_trigger(line, trigger):
-  if args.check_bot_nicks:
+def check_trigger(line, trigger, disregard_bot_nicks=False):
+  if disregard_bot_nicks or not args.check_bot_nicks:
+    return trigger in remove_html_tags(line)
+  else:
     triggers = bot_nick_prefix(trigger)
     return any(trigger in line for trigger in triggers)
-  return trigger in remove_html_tags(line)
+
+def remove_html_tags(text):
+  """Remove html tags from a string"""
+  clean = re.compile('<.*?>')
+  return re.sub(clean, '', text)
 
 def bot_nick_prefix(trigger):
   nicks = args.bot_nicks.split(',')
   return ['{}> {}'.format(nick, trigger) for nick in nicks]
-
-def remove_html_tags(text):
-  """Remove html tags from a string"""
-  import re
-  clean = re.compile('<.*?>')
-  return re.sub(clean, '', text)
 
 def notify(data, **kwargs):
   headers = {k.capitalize():str(v).encode('utf-8') for (k,v) in kwargs.items()}
