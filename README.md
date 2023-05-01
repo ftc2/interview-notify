@@ -10,7 +10,7 @@ Push notifications from IRC for your private tracker interviews
 
 ## how to use
 
-pretty self explanatory if you read at the cli help:
+pretty self explanatory if you read the help:
 
 ```
 ./interview_notify.py -h
