@@ -3,6 +3,8 @@ Push notifications from IRC for your private tracker interviews
 
 <img src="https://i.imgur.com/ZLFyxgY.png">
 
+this script parses log files from your irc client and attempts to be client-agnostic.
+
 ## installing
 
 - install python3. i suggest homebrew, choco, or just use the installer: https://www.python.org/downloads/
