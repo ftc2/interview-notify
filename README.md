@@ -3,7 +3,7 @@ Push notifications from IRC for your private tracker interviews
 
 <img src="https://i.imgur.com/ZLFyxgY.png">
 
-## install
+## installing
 
 - install python3. i suggest homebrew, choco, or just use the installer: https://www.python.org/downloads/
   - _this script might require python3.11_
@@ -12,7 +12,7 @@ Push notifications from IRC for your private tracker interviews
   - `git clone https://github.com/ftc2/interview-notify.git`
 - `python3 interview_notify.py`
 
-## how to use
+## using
 
 pretty self explanatory if you read the help:
 
@@ -45,3 +45,19 @@ On mobile, I suggest enabling the 'Instant delivery' feature as well as 'Keep al
   highest priority'. These will enable fastest and most reliable delivery of the
   notification, and your phone will continuously alarm when your interview is ready.
 ```
+
+## testing/troubleshooting
+
+first, use `-v` and make sure you can see new messages from IRC showing up:
+
+`interview_notify.py --topic your_topic --log-dir /path/to/logs --nick your_nick -v`
+
+### testing notifications
+
+`interview_notify.py --topic your_topic --log-dir /path/to/logs --nick your_nick --bot-nicks Gatekeeper,your_nick -v`
+
+then type `Currently interviewing: your_nick` in IRC.
+
+if it doesn't work, maybe you have a wonky log file format. try with `--no-check-bot-nicks`:
+
+`interview_notify.py --topic your_topic --log-dir /path/to/logs --nick your_nick --no-check-bot-nicks -v`
