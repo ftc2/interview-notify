@@ -6,6 +6,7 @@ Push notifications from IRC for your private tracker interviews
 ## install
 
 - install python3. i suggest homebrew, choco, or just use the installer: https://www.python.org/downloads/
+  - _this script might require python3.11_
 - install the `requests` module with `pip3 install requests`
 - clone this repo or just save the script
 - `python3 interview_notify.py`
@@ -19,7 +20,7 @@ pretty self explanatory if you read the help:
 
 usage: interview_notify.py [-h] --topic TOPIC [--server SERVER] --log-dir PATH --nick NICK [--check-bot-nicks | --no-check-bot-nicks] [--bot-nicks NICKS] [--mode {red,orp}] [-v] [--version]
 
-IRC Interview Notifier v1.2.4
+IRC Interview Notifier v1.2.5
 https://github.com/ftc2/interview-notify
 
 options:

@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 
-import argparse, sys, os, threading, logging, re, requests
+import argparse, sys, threading, logging, re, requests
 from pathlib import Path
+from file_read_backwards import FileReadBackwards
 from time import sleep
 from hashlib import sha256
 
-VERSION = '1.2.4'
+VERSION = '1.2.5'
 
 parser = argparse.ArgumentParser(prog='interview_notify.py',
   description='IRC Interview Notifier v{}\nhttps://github.com/ftc2/interview-notify'.format(VERSION),
@@ -58,8 +59,7 @@ def spawn_parser(log_path):
 
 def log_parse(log_path, parser_stop):
   logging.info('parser: using "{}"'.format(log_path.name))
-  log = open(log_path, 'r')
-  for line in tail(log, parser_stop):
+  for line in tail(log_path, parser_stop):
     logging.debug(line)
     if check_trigger(line, 'Currently interviewing: {}'.format(args.nick)):
       logging.info('YOUR INTERVIEW IS HAPPENING ❗')
@@ -74,14 +74,19 @@ def log_parse(log_path, parser_stop):
       logging.info('netsplit detected ⚠️')
       notify(line, title="Netsplit detected – requeue within 10min!", tags='electric_plug', priority=5)
 
-def tail(f, parser_stop):
-  f.seek(0, os.SEEK_END)
-  while not parser_stop.is_set():
-    line = f.readline()
-    if not line:
-      sleep(0.1) # polling delay for checking for new lines
-      continue
-    yield line
+def tail(path, parser_stop):
+  with FileReadBackwards(path) as f:
+    last_line = f.readline()
+    if last_line:
+      yield last_line
+  with open(path) as f:
+    f.seek(0, 2) # os.SEEK_END
+    while not parser_stop.is_set():
+      line = f.readline()
+      if not line:
+        sleep(0.1) # polling delay for checking for new lines
+        continue
+      yield line
 
 def check_trigger(line, trigger, disregard_bot_nicks=False):
   if disregard_bot_nicks or not args.check_bot_nicks:
