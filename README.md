@@ -8,7 +8,8 @@ Push notifications from IRC for your private tracker interviews
 - install python3. i suggest homebrew, choco, or just use the installer: https://www.python.org/downloads/
   - _this script might require python3.11_
 - install the `requests` module with `pip3 install requests`
-- clone this repo or just save the script
+- clone this repo
+  - `git clone https://github.com/ftc2/interview-notify.git`
 - `python3 interview_notify.py`
 
 ## how to use
