@@ -4,7 +4,7 @@ import argparse, sys, os, threading, logging, re, requests
 from pathlib import Path
 from time import sleep
 
-VERSION = '1.2.0'
+VERSION = '1.2.1'
 
 parser = argparse.ArgumentParser(prog='interview_notify.py',
   description='IRC Interview Notifier v{}\nhttps://github.com/ftc2/interview-notify'.format(VERSION),
@@ -89,7 +89,7 @@ def check_trigger(line, trigger, disregard_bot_nicks=False):
     return any(trigger in line for trigger in triggers)
 
 def check_netsplit(line):
-  split_triggers = ['quit', 'part', 'left', 'leave']
+  split_triggers = ['quit', 'disconnect', 'part', 'left', 'leave']
   for trigger in split_triggers:
     for nick in args.bot_nicks.split(','):
       if nick in line and trigger in line:
