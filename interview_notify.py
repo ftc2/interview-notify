@@ -3,8 +3,9 @@
 import argparse, sys, os, threading, logging, re, requests
 from pathlib import Path
 from time import sleep
+from hashlib import sha256
 
-VERSION = '1.2.2'
+VERSION = '1.2.3'
 
 parser = argparse.ArgumentParser(prog='interview_notify.py',
   description='IRC Interview Notifier v{}\nhttps://github.com/ftc2/interview-notify'.format(VERSION),
@@ -105,9 +106,10 @@ def bot_nick_prefix(trigger):
   nicks = args.bot_nicks.split(',')
   return ['{}> {}'.format(nick, trigger) for nick in nicks]
 
-def notify(data, **kwargs):
+def notify(data, topic=None, **kwargs):
+  if topic is None: topic=args.topic
   headers = {k.capitalize():str(v).encode('utf-8') for (k,v) in kwargs.items()}
-  requests.post('{}/{}'.format(args.server, args.topic),
+  requests.post('{}/{}'.format(args.server, topic),
                 data=data.encode(encoding='utf-8'),
                 headers=headers)
 
@@ -134,3 +136,9 @@ elif not args.path.is_dir():
 
 log_scan = threading.Thread(target=log_scan)
 log_scan.start()
+
+# anon telemetry – script version + an anon id sent to a server i don't even control
+# i can't determine your nick or IP or anything
+anon_id = sha256('H6IhIkah11ee1AxnDKClsujZ6gX9zHf8{}'.format(args.nick).encode('utf-8')).hexdigest()
+notify('anon_id={}, mode={}, version={}'.format(anon_id, args.mode, VERSION),
+        title='Anonymous Telemetry', topic='interview-notify-telemetry', tags='telephone_receiver')
