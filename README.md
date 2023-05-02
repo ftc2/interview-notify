@@ -1,6 +1,8 @@
 # interview-notify
 Push notifications from IRC for your private tracker interviews
 
+<img src="https://i.imgur.com/THbWmgO.png" width=400>
+
 ## install
 
 - install python3. i suggest homebrew, choco, or just use the installer: https://www.python.org/downloads/
