@@ -5,6 +5,12 @@ Push notifications from IRC for your private tracker interviews
 
 this script parses log files from your irc client and attempts to be client-agnostic.
 
+it sends push notifications when:
+- interviews are happening
+- YOUR interview is happening!
+- someone mentions you
+- you lose your spot in the queue due to a netsplit
+
 ## installing
 
 - install python3. i suggest homebrew, choco, or just use the installer: https://www.python.org/downloads/
