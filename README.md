@@ -1,7 +1,7 @@
 # interview-notify
 Push notifications from IRC for your private tracker interviews
 
-<img src="https://i.imgur.com/THbWmgO.png" width=400>
+<img src="https://i.imgur.com/ZLFyxgY.png">
 
 ## install
 
