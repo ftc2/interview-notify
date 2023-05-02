@@ -6,7 +6,7 @@ from file_read_backwards import FileReadBackwards
 from time import sleep
 from hashlib import sha256
 
-VERSION = '1.2.5'
+VERSION = '1.2.6'
 
 parser = argparse.ArgumentParser(prog='interview_notify.py',
   description='IRC Interview Notifier v{}\nhttps://github.com/ftc2/interview-notify'.format(VERSION),
@@ -29,6 +29,7 @@ parser.add_argument('-v', action='count', default=5, dest='verbose', help='verbo
 parser.add_argument('--version', action='version', version='{} v{}'.format(parser.prog, VERSION))
 
 def log_scan():
+  """Poll dir for most recently modified log file and spawn a parser thread for the log"""
   logging.info('scanner: watching logs in "{}"'.format(args.path))
   curr = find_latest_log()
   logging.debug('scanner: current log: "{}"'.format(curr.name))
@@ -46,18 +47,21 @@ def log_scan():
       parser.start()
 
 def find_latest_log():
+  """Find latest log file"""
   files = [f for f in args.path.iterdir() if f.is_file() and f.name not in ['.DS_Store', 'thumbs.db']]
   if len(files) == 0:
     crit_quit('no log files found')
   return max(files, key=lambda f: f.stat().st_mtime)
 
 def spawn_parser(log_path):
+  """Spawn new parser thread"""
   logging.debug('spawning new parser')
   parser_stop = threading.Event()
   thread = threading.Thread(target=log_parse, args=(log_path, parser_stop))
   return thread, parser_stop
 
 def log_parse(log_path, parser_stop):
+  """Parse log file and notify on triggers (parser thread)"""
   logging.info('parser: using "{}"'.format(log_path.name))
   for line in tail(log_path, parser_stop):
     logging.debug(line)
@@ -75,6 +79,7 @@ def log_parse(log_path, parser_stop):
       notify(line, title="Netsplit detected – requeue within 10min!", tags='electric_plug', priority=5)
 
 def tail(path, parser_stop):
+  """Poll file and yield lines as they appear"""
   with FileReadBackwards(path) as f:
     last_line = f.readline()
     if last_line:
@@ -89,6 +94,7 @@ def tail(path, parser_stop):
       yield line
 
 def check_trigger(line, trigger, disregard_bot_nicks=False):
+  """Check for a trigger in a line"""
   if disregard_bot_nicks or not args.check_bot_nicks:
     return trigger in remove_html_tags(line)
   else:
@@ -96,6 +102,7 @@ def check_trigger(line, trigger, disregard_bot_nicks=False):
     return any(trigger in line for trigger in triggers)
 
 def check_netsplit(line):
+  """Detect netsplits"""
   split_triggers = ['quit', 'disconnect', 'part', 'left', 'leave']
   for trigger in split_triggers:
     for nick in args.bot_nicks.split(','):
@@ -109,15 +116,29 @@ def remove_html_tags(text):
   return re.sub(clean, '', text)
 
 def bot_nick_prefix(trigger):
+  """Prefix a trigger with bot nick(s) to reduce false positives"""
   nicks = args.bot_nicks.split(',')
   return ['{}> {}'.format(nick, trigger) for nick in nicks]
 
 def notify(data, topic=None, **kwargs):
+  """Send notification via ntfy"""
   if topic is None: topic=args.topic
   headers = {k.capitalize():str(v).encode('utf-8') for (k,v) in kwargs.items()}
   requests.post('{}/{}'.format(args.server, topic),
                 data=data.encode(encoding='utf-8'),
                 headers=headers)
+
+def anon_telemetry():
+  """Send anonymous telemetry
+
+  sends: anon id based on nick, script mode, script version
+  I can't get your nick or IP or anything
+  """
+  seed = 'H6IhIkah11ee1AxnDKClsujZ6gX9zHf8'
+  nick_sha = sha256(args.nick.encode('utf-8')).hexdigest()
+  anon_id = sha256('{}{}'.format(nick_sha, seed).encode('utf-8')).hexdigest()
+  notify('anon_id={}, mode={}, version={}'.format(anon_id, args.mode, VERSION),
+          title='Anonymous Telemetry', topic='interview-notify-telemetry', tags='telephone_receiver')
 
 def crit_quit(msg):
   logging.critical(msg)
@@ -141,8 +162,4 @@ elif not args.path.is_dir():
 scanner = threading.Thread(target=log_scan)
 scanner.start()
 
-# anon telemetry – script version + an anon id sent to a server i don't even control
-# i can't determine your nick or IP or anything
-anon_id = sha256('H6IhIkah11ee1AxnDKClsujZ6gX9zHf8{}'.format(args.nick).encode('utf-8')).hexdigest()
-notify('anon_id={}, mode={}, version={}'.format(anon_id, args.mode, VERSION),
-        title='Anonymous Telemetry', topic='interview-notify-telemetry', tags='telephone_receiver')
+anon_telemetry()
