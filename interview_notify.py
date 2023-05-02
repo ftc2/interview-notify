@@ -4,7 +4,7 @@ import argparse, sys, os, threading, logging, re, requests
 from pathlib import Path
 from time import sleep
 
-VERSION = '1.2.1'
+VERSION = '1.2.2'
 
 parser = argparse.ArgumentParser(prog='interview_notify.py',
   description='IRC Interview Notifier v{}\nhttps://github.com/ftc2/interview-notify'.format(VERSION),
@@ -40,7 +40,7 @@ def log_scan():
       parser.join()
       parser, stop_event = spawn_parser(curr)
       parser.start()
-    sleep(1) # scan for newer file every 1s
+    sleep(0.5) # polling delay for checking for newer logfile
 
 def find_latest_log():
   files = [f for f in args.path.iterdir() if f.is_file() and f.name not in ['.DS_Store', 'thumbs.db']]
@@ -77,7 +77,7 @@ def tail(f, stop_event):
   while not stop_event.is_set():
     line = f.readline()
     if not line:
-      sleep(0.5) # check for new lines every 0.5s
+      sleep(0.1) # polling delay for checking for new lines
       continue
     yield line
 
