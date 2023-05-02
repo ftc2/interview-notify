@@ -4,7 +4,7 @@ import argparse, sys, os, threading, logging, re, requests
 from pathlib import Path
 from time import sleep
 
-VERSION = '1.1.0'
+VERSION = '1.2.0'
 
 parser = argparse.ArgumentParser(prog='interview_notify.py',
   description='IRC Interview Notifier v{}\nhttps://github.com/ftc2/interview-notify'.format(VERSION),
@@ -68,6 +68,9 @@ def log_parse(log_path, stop_event):
     elif check_trigger(line, '{}:'.format(args.nick), disregard_bot_nicks=True):
       logging.info('mention detected ⚠️')
       notify(line, title="You've been mentioned", tags='wave')
+    elif check_netsplit(line):
+      logging.info('netsplit detected ⚠️')
+      notify(line, title="Netsplit detected – requeue within 10min!", tags='electric_plug', priority=5)
 
 def tail(f, stop_event):
   f.seek(0, os.SEEK_END)
@@ -77,7 +80,6 @@ def tail(f, stop_event):
       sleep(0.5) # check for new lines every 0.5s
       continue
     yield line
-  yield ''
 
 def check_trigger(line, trigger, disregard_bot_nicks=False):
   if disregard_bot_nicks or not args.check_bot_nicks:
@@ -85,6 +87,14 @@ def check_trigger(line, trigger, disregard_bot_nicks=False):
   else:
     triggers = bot_nick_prefix(trigger)
     return any(trigger in line for trigger in triggers)
+
+def check_netsplit(line):
+  split_triggers = ['quit', 'part', 'left', 'leave']
+  for trigger in split_triggers:
+    for nick in args.bot_nicks.split(','):
+      if nick in line and trigger in line:
+        return True
+  return False
 
 def remove_html_tags(text):
   """Remove html tags from a string"""
