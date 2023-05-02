@@ -5,7 +5,7 @@ from pathlib import Path
 from time import sleep
 from hashlib import sha256
 
-VERSION = '1.2.3'
+VERSION = '1.2.4'
 
 parser = argparse.ArgumentParser(prog='interview_notify.py',
   description='IRC Interview Notifier v{}\nhttps://github.com/ftc2/interview-notify'.format(VERSION),
@@ -28,20 +28,21 @@ parser.add_argument('-v', action='count', default=5, dest='verbose', help='verbo
 parser.add_argument('--version', action='version', version='{} v{}'.format(parser.prog, VERSION))
 
 def log_scan():
+  logging.info('scanner: watching logs in "{}"'.format(args.path))
   curr = find_latest_log()
-  logging.debug('current log: {}'.format(curr.name))
-  parser, stop_event = spawn_parser(curr)
+  logging.debug('scanner: current log: "{}"'.format(curr.name))
+  parser, parser_stop = spawn_parser(curr)
   parser.start()
   while True:
+    sleep(0.5) # polling delay for checking for newer logfile
     latest = find_latest_log()
     if curr != latest:
       curr = latest
-      logging.info('newer log found: {}'.format(curr.name))
-      stop_event.set()
+      logging.info('scanner: newer log found: "{}"'.format(curr.name))
+      parser_stop.set()
       parser.join()
-      parser, stop_event = spawn_parser(curr)
+      parser, parser_stop = spawn_parser(curr)
       parser.start()
-    sleep(0.5) # polling delay for checking for newer logfile
 
 def find_latest_log():
   files = [f for f in args.path.iterdir() if f.is_file() and f.name not in ['.DS_Store', 'thumbs.db']]
@@ -51,21 +52,21 @@ def find_latest_log():
 
 def spawn_parser(log_path):
   logging.debug('spawning new parser')
-  stop_event = threading.Event()
-  thread = threading.Thread(target=log_parse, args=(log_path, stop_event))
-  return thread, stop_event
+  parser_stop = threading.Event()
+  thread = threading.Thread(target=log_parse, args=(log_path, parser_stop))
+  return thread, parser_stop
 
-def log_parse(log_path, stop_event):
-  logging.info('parsing log file: {}'.format(log_path.name))
+def log_parse(log_path, parser_stop):
+  logging.info('parser: using "{}"'.format(log_path.name))
   log = open(log_path, 'r')
-  for line in tail(log, stop_event):
+  for line in tail(log, parser_stop):
     logging.debug(line)
     if check_trigger(line, 'Currently interviewing: {}'.format(args.nick)):
       logging.info('YOUR INTERVIEW IS HAPPENING ❗')
       notify(line, title='Your interview is happening❗', tags='rotating_light', priority=5)
     elif check_trigger(line, 'Currently interviewing:'):
       logging.info('interview detected ⚠️')
-      notify(line, title='Interview Detected', tags='warning')
+      notify(line, title='Interview detected', tags='warning')
     elif check_trigger(line, '{}:'.format(args.nick), disregard_bot_nicks=True):
       logging.info('mention detected ⚠️')
       notify(line, title="You've been mentioned", tags='wave')
@@ -73,9 +74,9 @@ def log_parse(log_path, stop_event):
       logging.info('netsplit detected ⚠️')
       notify(line, title="Netsplit detected – requeue within 10min!", tags='electric_plug', priority=5)
 
-def tail(f, stop_event):
+def tail(f, parser_stop):
   f.seek(0, os.SEEK_END)
-  while not stop_event.is_set():
+  while not parser_stop.is_set():
     line = f.readline()
     if not line:
       sleep(0.1) # polling delay for checking for new lines
@@ -124,8 +125,6 @@ args = parser.parse_args()
 args.verbose = 70 - (10*args.verbose) if args.verbose > 0 else 0
 logging.basicConfig(level=args.verbose, format='%(asctime)s %(levelname)s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
-logging.info('parsing logs in "{}"'.format(args.path))
-
 if args.mode != 'red':
   crit_quit('"{}" mode not implemented'.format(args.mode))
 
@@ -134,8 +133,8 @@ if args.path.is_file():
 elif not args.path.is_dir():
   crit_quit('log path invalid')
 
-log_scan = threading.Thread(target=log_scan)
-log_scan.start()
+scanner = threading.Thread(target=log_scan)
+scanner.start()
 
 # anon telemetry – script version + an anon id sent to a server i don't even control
 # i can't determine your nick or IP or anything
