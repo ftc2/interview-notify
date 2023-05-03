@@ -2,11 +2,13 @@
 
 import argparse, sys, threading, logging, re, requests
 from pathlib import Path
-from file_read_backwards import FileReadBackwards
 from time import sleep
+from file_read_backwards import FileReadBackwards
 from hashlib import sha256
+from urllib.parse import urljoin
 
-VERSION = '1.2.6'
+VERSION = '1.2.7'
+default_server = 'https://ntfy.sh/'
 
 parser = argparse.ArgumentParser(prog='interview_notify.py',
   description='IRC Interview Notifier v{}\nhttps://github.com/ftc2/interview-notify'.format(VERSION),
@@ -19,7 +21,7 @@ On mobile, I suggest enabling the 'Instant delivery' feature as well as 'Keep al
   notification, and your phone will continuously alarm when your interview is ready.''',
   formatter_class=argparse.RawDescriptionHelpFormatter)
 parser.add_argument('--topic', required=True, help='ntfy topic name to POST notifications to')
-parser.add_argument('--server', default='https://ntfy.sh', help='ntfy server to POST notifications to – default: https://ntfy.sh')
+parser.add_argument('--server', default=default_server, help='ntfy server to POST notifications to – default: {}'.format(default_server))
 parser.add_argument('--log-dir', required=True, dest='path', type=Path, help='path to IRC logs (continuously checks for newest file to parse)')
 parser.add_argument('--nick', required=True, help='your IRC nick')
 parser.add_argument('--check-bot-nicks', default=True, action=argparse.BooleanOptionalAction, help="attempt to parse bot's nick. disable if your log files are not like '<nick> message' – default: enabled")
@@ -74,9 +76,12 @@ def log_parse(log_path, parser_stop):
     elif check_trigger(line, '{}:'.format(args.nick), disregard_bot_nicks=True):
       logging.info('mention detected ⚠️')
       notify(line, title="You've been mentioned", tags='wave')
-    elif check_netsplit(line):
+    elif check_words(line, triggers=['quit', 'disconnect', 'part', 'left', 'leave']):
       logging.info('netsplit detected ⚠️')
       notify(line, title="Netsplit detected – requeue within 10min!", tags='electric_plug', priority=5)
+    elif check_words(line, triggers=['kick'], check_nick=True):
+      logging.info('kick detected ⚠️')
+      notify(line, title="You've been kicked – rejoin & requeue ASAP!", tags='anger', priority=5)
 
 def tail(path, parser_stop):
   """Poll file and yield lines as they appear"""
@@ -101,13 +106,16 @@ def check_trigger(line, trigger, disregard_bot_nicks=False):
     triggers = bot_nick_prefix(trigger)
     return any(trigger in line for trigger in triggers)
 
-def check_netsplit(line):
-  """Detect netsplits"""
-  split_triggers = ['quit', 'disconnect', 'part', 'left', 'leave']
-  for trigger in split_triggers:
-    for nick in args.bot_nicks.split(','):
-      if nick in line and trigger in line:
-        return True
+def check_words(line, triggers, check_nick=False):
+  """Check if a trigger & a bot nick & (optionally) user nick all appear in a string"""
+  for trigger in triggers:
+    for bot in args.bot_nicks.split(','):
+      if check_nick:
+        if args.nick in line and bot in line and trigger in line:
+          return True
+      else:
+        if bot in line and trigger in line:
+          return True
   return False
 
 def remove_html_tags(text):
@@ -120,20 +128,24 @@ def bot_nick_prefix(trigger):
   nicks = args.bot_nicks.split(',')
   return ['{}> {}'.format(nick, trigger) for nick in nicks]
 
-def notify(data, topic=None, **kwargs):
+def notify(data, topic=None, server=None, **kwargs):
   """Send notification via ntfy"""
   if topic is None: topic=args.topic
+  if server is None: server=args.server
+  if server[-1] != '/': server += '/'
+  target = urljoin(server, topic, allow_fragments=False)
   headers = {k.capitalize():str(v).encode('utf-8') for (k,v) in kwargs.items()}
-  requests.post('{}/{}'.format(args.server, topic),
+  requests.post(target,
                 data=data.encode(encoding='utf-8'),
                 headers=headers)
 
 def anon_telemetry():
   """Send anonymous telemetry
 
-  sends: anon id based on nick, script mode, script version
   Why? I won't bother working on it if I don't see people using it!
   I can't get your nick or IP or anything.
+
+  sends: anon id based on nick, script mode, script version
   """
   seed = 'H6IhIkah11ee1AxnDKClsujZ6gX9zHf8'
   nick_sha = sha256(args.nick.encode('utf-8')).hexdigest()

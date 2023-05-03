@@ -29,7 +29,7 @@ pretty self explanatory if you read the help:
 
 usage: interview_notify.py [-h] --topic TOPIC [--server SERVER] --log-dir PATH --nick NICK [--check-bot-nicks | --no-check-bot-nicks] [--bot-nicks NICKS] [--mode {red,orp}] [-v] [--version]
 
-IRC Interview Notifier v1.2.6
+IRC Interview Notifier v1.2.7
 https://github.com/ftc2/interview-notify
 
 options:
