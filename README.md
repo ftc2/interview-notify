@@ -3,6 +3,8 @@ Push notifications from IRC for your private tracker interviews
 
 <img src="https://i.imgur.com/ZLFyxgY.png">
 
+## features
+
 this script parses log files from your irc client and attempts to be client-agnostic.
 
 it sends push notifications when:
@@ -10,6 +12,7 @@ it sends push notifications when:
 - YOUR interview is happening!
 - someone mentions you
 - you lose your spot in the queue due to a netsplit
+- you get kicked
 
 ## installing
 
