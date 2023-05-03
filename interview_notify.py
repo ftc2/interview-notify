@@ -7,7 +7,7 @@ from file_read_backwards import FileReadBackwards
 from hashlib import sha256
 from urllib.parse import urljoin
 
-VERSION = '1.2.7'
+VERSION = '1.2.8'
 default_server = 'https://ntfy.sh/'
 
 parser = argparse.ArgumentParser(prog='interview_notify.py',
@@ -151,6 +151,7 @@ def anon_telemetry():
   nick_sha = sha256(args.nick.encode('utf-8')).hexdigest()
   anon_id = sha256('{}{}'.format(nick_sha, seed).encode('utf-8')).hexdigest()
   notify('anon_id={}, mode={}, version={}'.format(anon_id, args.mode, VERSION),
+          server=default_server,
           title='Anonymous Telemetry', topic='interview-notify-telemetry', tags='telephone_receiver')
 
 def crit_quit(msg):
