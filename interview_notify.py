@@ -24,7 +24,7 @@ parser.add_argument('--log-dir', required=True, dest='path', type=Path, help='pa
 parser.add_argument('--nick', required=True, help='your IRC nick')
 parser.add_argument('--check-bot-nicks', default=True, action=argparse.BooleanOptionalAction, help="attempt to parse bot's nick. disable if your log files are not like '<nick> message' – default: enabled")
 parser.add_argument('--bot-nicks', metavar='NICKS', default='Gatekeeper', help='comma-separated list of bot nicks to watch – default: Gatekeeper')
-parser.add_argument('--mode', choices=['red', 'orp'], default='red', help='interview mode (affects triggers) – default: red')
+parser.add_argument('--mode', choices=['red', 'ops'], default='red', help='interview mode (affects triggers) – default: red')
 parser.add_argument('-v', action='count', default=5, dest='verbose', help='verbose (invoke multiple times for more verbosity)')
 parser.add_argument('--version', action='version', version='{} v{}'.format(parser.prog, VERSION))
 
@@ -132,7 +132,8 @@ def anon_telemetry():
   """Send anonymous telemetry
 
   sends: anon id based on nick, script mode, script version
-  I can't get your nick or IP or anything
+  Why? I won't bother working on it if I don't see people using it!
+  I can't get your nick or IP or anything.
   """
   seed = 'H6IhIkah11ee1AxnDKClsujZ6gX9zHf8'
   nick_sha = sha256(args.nick.encode('utf-8')).hexdigest()
