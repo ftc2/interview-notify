@@ -7,7 +7,7 @@ from file_read_backwards import FileReadBackwards
 from hashlib import sha256
 from urllib.parse import urljoin
 
-VERSION = '1.2.9'
+VERSION = '1.2.10'
 default_server = 'https://ntfy.sh/'
 
 parser = argparse.ArgumentParser(prog='interview_notify.py',
@@ -111,10 +111,10 @@ def check_words(line, triggers, check_nick=False):
   for trigger in triggers:
     for bot in args.bot_nicks.split(','):
       if check_nick:
-        if args.nick in line and bot in line and trigger in line.lower():
+        if args.nick in line and bot in line and trigger.lower() in line.lower():
           return True
       else:
-        if bot in line and trigger in line:
+        if bot in line and trigger.lower() in line.lower():
           return True
   return False
 
