@@ -29,6 +29,7 @@ parser.add_argument('--bot-nicks', metavar='NICKS', default='Gatekeeper', help='
 parser.add_argument('--mode', choices=['red', 'ops'], default='red', help='interview mode (affects triggers) – default: red')
 parser.add_argument('-v', action='count', default=5, dest='verbose', help='verbose (invoke multiple times for more verbosity)')
 parser.add_argument('--version', action='version', version='{} v{}'.format(parser.prog, VERSION))
+parser.add_argument('--textual', default=False, dest='textual', action=argparse.BooleanOptionalAction, help="If using textual irc set to true to enable alternative file discovery")
 
 def log_scan():
   """Poll dir for most recently modified log file and spawn a parser thread for the log"""
@@ -50,7 +51,10 @@ def log_scan():
 
 def find_latest_log():
   """Find latest log file"""
-  files = [f for f in args.path.iterdir() if f.is_file() and f.name not in ['.DS_Store', 'thumbs.db']]
+  if not args.textual:
+    files = [f for f in args.path.iterdir() if f.is_file() and f.name not in ['.DS_Store', 'thumbs.db']]
+  else:
+    files = [file for file in args.path.rglob('*.txt')]
   if len(files) == 0:
     crit_quit('no log files found')
   return max(files, key=lambda f: f.stat().st_mtime)

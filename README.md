@@ -65,10 +65,10 @@ first, use `-v` and make sure you can see new messages from IRC showing up:
 
 ### testing notifications
 
-`interview_notify.py --topic your_topic --log-dir /path/to/logs --nick your_nick --bot-nicks Gatekeeper,your_nick -v`
+`interview_notify.py --topic your_topic --log-dir /path/to/logs --nick your_nick --bot-nicks Gatekeeper,your_nick -v --textual`
 
 then type `Currently interviewing: your_nick` in IRC.
 
 if it doesn't work, maybe you have a wonky log file format. try with `--no-check-bot-nicks`:
 
-`interview_notify.py --topic your_topic --log-dir /path/to/logs --nick your_nick --no-check-bot-nicks -v`
+`interview_notify.py --topic your_topic --log-dir /path/to/logs --nick your_nick --no-check-bot-nicks --textual -v`
