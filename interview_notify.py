@@ -8,7 +8,7 @@ from file_read_backwards import FileReadBackwards
 from hashlib import sha256
 from urllib.parse import urljoin
 
-VERSION = '1.3.0'
+VERSION = '1.3.1'
 default_server = 'https://ntfy.sh/'
 ACTIVE_WINDOW = 600 # seconds: also watch logs modified this close to the newest one
 position_lock = threading.Lock()
@@ -137,7 +137,7 @@ def log_parse(log_path, parser_stop):
     elif check_trigger(line, '{}:'.format(args.nick), disregard_bot_nicks=True):
       logging.info('mention detected ⚠️')
       notify(line, title="You've been mentioned", tags='wave')
-    elif check_words(line, triggers=['quit', 'disconnect', 'part', 'left', 'leave']):
+    elif check_words(line, triggers=['quit', 'disconnect', 'part', 'left', 'leave']) and not check_trigger(line, "'Soon' does not imply any particular date"):
       logging.info('netsplit detected ⚠️')
       notify(line, title="Netsplit detected – requeue within 10min!", tags='electric_plug', priority=5)
     elif check_words(line, triggers=['kick'], check_nick=True) or 'You have been kicked' in line:
